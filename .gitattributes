@@ -1,0 +1,7 @@
+/.github export-ignore
+/tests export-ignore
+/js/src export-ignore
+/js/node_modules export-ignore
+/screenshots export-ignore
+/phpstan.neon export-ignore
+/CLAUDE.md export-ignore

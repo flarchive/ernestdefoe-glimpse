@@ -1,0 +1,47 @@
+<?php
+
+// Optional extensions Glimpse uses only when they're enabled. Their real classes aren't installed in CI.
+
+namespace Ernestdefoe\PageBuilder\Block {
+    use Flarum\User\User;
+
+    interface BlockInterface
+    {
+        public function type(): string;
+
+        public function name(): string;
+
+        public function icon(): string;
+
+        public function category(): string;
+
+        /** @return array<string, mixed> */
+        public function defaultSettings(): array;
+
+        /** @return list<array<string, mixed>> */
+        public function settingsSchema(): array;
+
+        /**
+         * @param array<string, mixed> $settings
+         * @return array<string, mixed>
+         */
+        public function resolve(array $settings, User $actor): array;
+    }
+}
+
+namespace Ernestdefoe\PageBuilder\Extend {
+    use Flarum\Extend\ExtenderInterface;
+    use Flarum\Extension\Extension;
+    use Illuminate\Contracts\Container\Container;
+
+    class PageBuilderBlock implements ExtenderInterface
+    {
+        public function __construct(protected string $blockClass)
+        {
+        }
+
+        public function extend(Container $container, ?Extension $extension = null): void
+        {
+        }
+    }
+}
