@@ -2,19 +2,13 @@
 
 > **Read-only archive of released versions of ernestdefoe/glimpse.** Not for installation: use [Packagist](https://packagist.org/packages/ernestdefoe/glimpse) or the [upstream repository](https://github.com/ernestdefoe/glimpse).
 
-**7** versions archived · Latest: [`1.0.6`](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.6) · License: `MIT` · Flarum: `^2.0`
+**0** versions archived · Latest: [`1.0.7`](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.7) · License: `MIT` · Flarum: `^2.0`
 
 ## Archived Versions
 
 | Version | Released | Flarum | Source |
 |---|---|---|---|
-| `1.0.0` | 2026-11-15 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.0) |
-| `1.0.1` | 2026-11-16 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.1) |
-| `1.0.2` | 2026-11-17 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.2) |
-| `1.0.3` | 2026-11-17 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.3) |
-| `1.0.4` | 2026-11-17 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.4) |
-| `1.0.5` | 2026-11-17 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.5) |
-| `1.0.6` | 2026-11-17 | `^2.0` | [Browse](https://github.com/flarchive/ernestdefoe-glimpse/tree/archive/v1.0.6) |
+| — | — | — | — |
 
 Catalog entry: [packages/ernestdefoe-glimpse.json](https://github.com/flarchive/archive-index/blob/main/packages/ernestdefoe-glimpse.json)
 
