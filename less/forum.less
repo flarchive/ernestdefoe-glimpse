@@ -1,0 +1,1093 @@
+// Glimpse. Colours come from Flarum 2's custom properties, so the bar, cards and pages follow any theme,
+// light or dark. The viewer is always light-on-black (it is a photo frame), with its own explicit colours.
+// 🚨 Link colours are prefixed with html:not(#x-glimpse): themes recolour every <a> with selectors
+// of up to (0,3,1), and two of our classes would lose.
+
+@glimpse-ring: conic-gradient(from 210deg, #f9ce34, #ee2a7b, #6228d7, #f9ce34);
+
+.GlimpseText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+.GlimpseText-body {
+  margin: 0;
+  color: #fff;
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  white-space: pre-line;
+
+  &.is-long {
+    font-size: 19px;
+  }
+}
+
+// ---------- ring bar ----------
+
+.GlimpseBar {
+  margin: 0 0 16px;
+  min-width: 0;
+}
+.GlimpseBar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.GlimpseBar-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+html:not(#x-glimpse) .GlimpseBar-all {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+.GlimpseBar-rings {
+  display: flex;
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 4px 2px 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.GlimpseBar-item {
+  position: relative;
+  flex: none;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  scroll-snap-align: start;
+
+  &--loading {
+    height: 68px;
+    width: 68px;
+    border-radius: 50%;
+    background: var(--control-bg);
+  }
+}
+.GlimpseRing {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  padding: 3px;
+  border: 0;
+  background: @glimpse-ring;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &--seen {
+    background: var(--control-bg);
+    padding: 2px;
+  }
+  &--empty {
+    background: transparent;
+  }
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+.GlimpseRing-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--body-bg);
+  overflow: hidden;
+
+  .Avatar {
+    --size: 100%;
+    width: 100%;
+    height: 100%;
+    font-size: 22px;
+    line-height: 56px;
+  }
+}
+.GlimpseRing-plus {
+  position: absolute;
+  top: 46px;
+  left: 48px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--body-bg);
+  background: var(--primary-color);
+  color: var(--body-bg);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+}
+.GlimpseRing-name {
+  max-width: 72px;
+  font-size: 11.5px;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &--seen {
+    color: var(--muted-color);
+  }
+}
+.GlimpseBar--compact {
+  margin: 0;
+
+  .GlimpseBar-item {
+    width: 60px;
+  }
+  .GlimpseRing {
+    width: 56px;
+    height: 56px;
+  }
+  .GlimpseRing-avatar .Avatar {
+    line-height: 44px;
+    font-size: 18px;
+  }
+  .GlimpseRing-plus {
+    top: 36px;
+    left: 38px;
+  }
+}
+
+@media (max-width: 767px) {
+  .GlimpseBar-item {
+    width: 66px;
+  }
+  .GlimpseRing {
+    width: 62px;
+    height: 62px;
+  }
+  .GlimpseRing-avatar .Avatar {
+    line-height: 50px;
+  }
+  .GlimpseRing-plus {
+    top: 42px;
+    left: 44px;
+  }
+}
+
+.GlimpseNav-queue[data-count]::after {
+  content: attr(data-count);
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--primary-color);
+  color: var(--body-bg);
+}
+
+// ---------- viewer ----------
+
+body.GlimpseViewer-open {
+  overflow: hidden;
+
+  // Bespoke's reading-progress line sits at the very top of every page, over the story's own bars.
+  #bespoke-progress {
+    display: none;
+  }
+}
+.GlimpseViewer {
+  position: fixed;
+  inset: 0;
+  // Above the header, composer and dropdowns; below modals (report, seen by), which open over it.
+  z-index: 1035;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b0c0f;
+  color: #fff;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.GlimpseViewer-card {
+  position: relative;
+  height: calc(100% - 40px);
+  max-height: 860px;
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1b1d22;
+  transition: transform 0.15s ease-out;
+}
+.GlimpseViewer-media {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    pointer-events: none;
+  }
+  &--loading {
+    background: #1b1d22;
+
+    .LoadingIndicator {
+      color: #fff;
+    }
+  }
+}
+.GlimpseViewer-preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.GlimpseViewer-progress {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.35);
+  }
+  b {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #fff;
+  }
+  li.is-done b {
+    width: 100%;
+  }
+}
+.GlimpseViewer-head {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+html:not(#x-glimpse) .GlimpseViewer-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+
+  .Avatar {
+    --size: 32px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    font-size: 14px;
+  }
+}
+.GlimpseViewer-name {
+  font-weight: 700;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.GlimpseViewer-time,
+.GlimpseViewer-audience {
+  font-size: 13px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.GlimpseViewer-spacer {
+  flex: 1;
+}
+.GlimpseViewer-icon,
+.GlimpseViewer-close {
+  background: none;
+  border: 0;
+  padding: 6px;
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    border-radius: 4px;
+  }
+}
+.GlimpseViewer-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 6;
+  font-size: 26px;
+}
+.GlimpseViewer-arrow {
+  position: relative;
+  z-index: 5;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin: 0 20px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  color: #111;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+.GlimpseViewer-menu {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  z-index: 7;
+  min-width: 200px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border: 0;
+    background: none;
+    color: #111;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: #eef2f6;
+    }
+    &.is-danger {
+      color: #c62828;
+    }
+    .fas {
+      width: 18px;
+      margin-right: 4px;
+    }
+  }
+}
+.GlimpseViewer-paused,
+.GlimpseViewer-toast {
+  position: absolute;
+  left: 50%;
+  z-index: 8;
+  transform: translateX(-50%);
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.GlimpseViewer-paused {
+  top: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+.GlimpseViewer-toast {
+  bottom: 96px;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+}
+.GlimpseViewer-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 48px 12px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}
+.GlimpseViewer-caption {
+  margin: 0 0 8px;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: #fff;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  user-select: text;
+  -webkit-user-select: text;
+}
+html:not(#x-glimpse) .GlimpseViewer-caption a {
+  color: #fff;
+  font-weight: 700;
+}
+html:not(#x-glimpse) .GlimpseViewer-link {
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background: #fff;
+  color: #111;
+  font-weight: 700;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.GlimpseViewer-seen {
+  display: block;
+  margin: 2px auto 0;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.GlimpseViewer-reply {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.GlimpseViewer-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 20px;
+  background: transparent;
+  color: #fff;
+  // 16px stops iOS zooming into the field.
+  font-size: 16px;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  &:focus {
+    outline: none;
+    border-color: #fff;
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+.GlimpseViewer-react,
+.GlimpseViewer-send {
+  flex: none;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+}
+.GlimpseViewer-reactions {
+  // In the footer's flow, above the reply bar: a long caption pushes it up instead of hiding under it.
+  margin: 0 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+
+  button {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    font-size: 26px;
+    cursor: pointer;
+
+    &.is-active {
+      background: rgba(255, 255, 255, 0.35);
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .GlimpseViewer-card {
+    height: 100%;
+    max-height: none;
+    width: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+  .GlimpseViewer-arrow,
+  .GlimpseViewer-close {
+    display: none;
+  }
+  .GlimpseViewer-head {
+    top: calc(20px + env(safe-area-inset-top));
+  }
+  .GlimpseViewer-progress {
+    top: calc(10px + env(safe-area-inset-top));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .GlimpseViewer-card {
+    transition: none;
+  }
+}
+
+// ---------- create sheet ----------
+
+.GlimpseCreate .Modal-content {
+  max-width: 680px;
+}
+.GlimpseCreate-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+}
+.GlimpseCreate-preview {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--control-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .GlimpseText-body {
+    font-size: 19px;
+  }
+}
+.GlimpseCreate-preview:not(.GlimpseText) {
+  border: 2px dashed var(--muted-color);
+}
+.GlimpseCreate-placeholder {
+  font-size: 40px;
+  color: var(--muted-color);
+}
+.GlimpseCreate-fields {
+  min-width: 0;
+}
+.GlimpseCreate-kinds {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+
+  .Button {
+    flex: 1;
+    min-width: 0;
+
+    &.is-active {
+      background: var(--primary-color);
+      color: var(--body-bg);
+    }
+  }
+}
+.GlimpseCreate-drop {
+  display: block;
+  padding: 14px;
+  border: 2px dashed var(--control-bg);
+  border-radius: 8px;
+  color: var(--text-color);
+  text-align: center;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+
+  small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-color);
+  }
+  &:focus-within {
+    border-color: var(--primary-color);
+  }
+}
+.GlimpseCreate-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.GlimpseCreate-error {
+  margin: 6px 0 0;
+  color: var(--alert-error-bg, #d83e3e);
+  font-weight: 600;
+}
+.GlimpseCreate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .GlimpseChip {
+    margin: 0;
+  }
+}
+.GlimpseCreate-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 0 14px;
+}
+.GlimpseCreate-swatch {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+
+  &.is-active {
+    border-color: var(--text-color);
+  }
+}
+.GlimpseCreate-audience {
+  border: 0;
+  margin: 0 0 12px;
+  padding: 0;
+
+  legend {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-color);
+  }
+  input {
+    position: absolute;
+    opacity: 0;
+  }
+}
+.GlimpseChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 6px 6px 0;
+  padding: 5px 12px;
+  border: 1px solid var(--control-bg);
+  border-radius: 16px;
+  background: var(--body-bg);
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+
+  &.is-active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--body-bg);
+  }
+  &:focus-within,
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+.GlimpseCreate-foot {
+  grid-column: ~"1 / -1";
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.GlimpseCreate-lifetime {
+  margin-right: auto;
+  color: var(--muted-color);
+  font-size: 12.5px;
+}
+
+@media (max-width: 767px) {
+  .GlimpseCreate-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .GlimpseCreate-preview {
+    width: 120px;
+    justify-self: center;
+  }
+  .GlimpseCreate-foot {
+    flex-wrap: wrap;
+
+    .Button {
+      flex: 1;
+    }
+  }
+  .GlimpseCreate-lifetime {
+    flex-basis: 100%;
+  }
+}
+
+// ---------- seen by, report, highlight picker ----------
+
+.GlimpseSeenBy-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0 0 12px;
+  color: var(--muted-color);
+}
+.GlimpseSeenBy-private {
+  margin-left: auto;
+  font-size: 12px;
+}
+.GlimpseSeenBy-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--control-bg);
+  }
+}
+html:not(#x-glimpse) .GlimpseSeenBy-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--text-color);
+
+  .Avatar {
+    --size: 34px;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+  }
+}
+.GlimpseSeenBy-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.GlimpseSeenBy-time {
+  color: var(--muted-color);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.GlimpseSeenBy-reaction {
+  margin-left: auto;
+  font-size: 20px;
+}
+.GlimpseSeenBy-empty {
+  color: var(--muted-color);
+}
+.GlimpseReport-reasons {
+  border: 0;
+  padding: 0;
+
+  legend {
+    font-weight: 600;
+    color: var(--text-color);
+  }
+}
+.GlimpseHighlightPicker-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+// ---------- pages ----------
+
+.GlimpsePage-head,
+.GlimpseProfile-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.GlimpsePage-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: var(--text-color);
+}
+.GlimpsePage-intro,
+.GlimpsePage-empty,
+.GlimpseProfile-hint {
+  margin: 0;
+  color: var(--muted-color);
+}
+.GlimpsePage-chips {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+.GlimpsePage-more {
+  margin-top: 16px;
+  text-align: center;
+}
+.GlimpseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(~"min(150px, 100%)", 1fr));
+  gap: 12px;
+}
+@media (max-width: 767px) {
+  .GlimpseGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+.GlimpseCard {
+  min-width: 0;
+}
+.GlimpseCard-open {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--control-bg);
+  cursor: pointer;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+.GlimpseCard-media {
+  position: absolute;
+  inset: 0;
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .GlimpseText-body {
+    font-size: 15px;
+  }
+}
+.GlimpseCard-duration {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.GlimpseCard-who {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  font-size: 12px;
+  min-width: 0;
+
+  .Avatar {
+    --size: 26px;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    line-height: 22px;
+    font-size: 11px;
+    border: 2px solid #fff;
+  }
+  > span {
+    min-width: 0;
+  }
+}
+.GlimpseCard-name {
+  display: block;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.GlimpseCard-time {
+  display: block;
+  opacity: 0.9;
+}
+.GlimpseCard-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+
+  .Button {
+    width: 100%;
+  }
+}
+.GlimpseCard-status {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-color);
+}
+.GlimpseReports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.GlimpseReports-item {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--control-bg);
+}
+.GlimpseReports-reason,
+.GlimpseReports-detail {
+  margin: 0 0 8px;
+  color: var(--text-color);
+}
+.GlimpseReports-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.GlimpseProfile-section {
+  margin-bottom: 24px;
+}
+.GlimpseProfile-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+.GlimpseHighlights {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  list-style: none;
+  margin: 0;
+  padding: 2px 2px 8px;
+
+  > li {
+    position: relative;
+    flex: none;
+  }
+}
+.GlimpseHighlights-item {
+  width: 78px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: center;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
+.GlimpseHighlights-cover {
+  display: block;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 4px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--body-bg);
+  box-shadow: 0 0 0 2px var(--control-bg);
+  overflow: hidden;
+  background: var(--control-bg);
+
+  img,
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+.GlimpseHighlights-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.GlimpseHighlights-remove {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--control-bg);
+  color: var(--text-color);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .GlimpseReports-item {
+    grid-template-columns: 90px minmax(0, 1fr);
+  }
+  .GlimpsePage-head {
+    flex-wrap: wrap;
+  }
+}
+
+// The eight text backgrounds (the server keeps the index, 0–7). Last in the file: they win over
+// the plain backgrounds of the boxes they colour (preview, card, highlight cover).
+.GlimpseBg-0 { background: linear-gradient(135deg, #ee2a7b, #6228d7); }
+.GlimpseBg-1 { background: linear-gradient(135deg, #f9ce34, #ee2a7b); }
+.GlimpseBg-2 { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+.GlimpseBg-3 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+.GlimpseBg-4 { background: linear-gradient(135deg, #232526, #414345); }
+.GlimpseBg-5 { background: linear-gradient(135deg, #fc4a1a, #f7b733); }
+.GlimpseBg-6 { background: linear-gradient(135deg, #8e2de2, #4a00e0); }
+.GlimpseBg-7 { background: linear-gradient(135deg, #ff758c, #ff7eb3); }
