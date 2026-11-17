@@ -1,0 +1,116 @@
+{
+    "name": "ernestdefoe/glimpse",
+    "description": "Glimpse: Stories for Flarum. Short photo, video and text posts that disappear after a day, shown as a bar of avatar rings and played full screen, with reactions, private replies, a seen-by list, highlights and moderation.",
+    "keywords": [
+        "flarum",
+        "flarum-extension",
+        "stories",
+        "status",
+        "ephemeral",
+        "social",
+        "photos",
+        "video"
+    ],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernest Defoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "homepage": "https://github.com/ernestdefoe/glimpse",
+    "support": {
+        "issues": "https://github.com/ernestdefoe/glimpse/issues",
+        "source": "https://github.com/ernestdefoe/glimpse"
+    },
+    "funding": [
+        {
+            "type": "other",
+            "url": "https://buymeacoffee.com/ernestdefoe"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "flarum/core": "^2.0",
+        "intervention/image": "^3.0"
+    },
+    "suggest": {
+        "ianm/follow-users": "Rings of people you follow come first, and stories can be shared with followers only.",
+        "fof/ignore-users": "Members you ignore never show in your bar.",
+        "flarum/messages": "Replies to a story arrive as a private message.",
+        "ernestdefoe/parley": "Replies to a story arrive as a Parley message.",
+        "ernestdefoe/trust-levels": "Hold stories for approval below a trust level.",
+        "ernestdefoe/moments": "Also post a photo story to Moments.",
+        "flarum/suspend": "Suspended members' stories disappear while they are suspended.",
+        "fof/forum-widgets-core": "The ring bar as a FoF widget.",
+        "ernestdefoe/bespoke": "The ring bar in any Bespoke zone.",
+        "ernestdefoe/page-builder": "The ring bar as a Page Builder block."
+    },
+    "autoload": {
+        "psr-4": {
+            "ErnestDefoe\\Glimpse\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ErnestDefoe\\Glimpse\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Glimpse",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-circle-play",
+                "backgroundColor": "#e1306c",
+                "color": "#fff"
+            },
+            "optional-dependencies": [
+                "ianm/follow-users",
+                "fof/ignore-users",
+                "flarum/messages",
+                "flarum/suspend",
+                "ernestdefoe/parley",
+                "ernestdefoe/trust-levels",
+                "ernestdefoe/moments",
+                "fof/forum-widgets-core",
+                "ernestdefoe/bespoke",
+                "ernestdefoe/page-builder"
+            ]
+        }
+    },
+    "require-dev": {
+        "flarum/phpstan": "^2.0",
+        "flarum/suspend": "^2.0",
+        "flarum/testing": "^2.0",
+        "fof/ignore-users": "^2.0",
+        "ianm/follow-users": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": false
+        }
+    },
+    "scripts": {
+        "test": [
+            "@test:unit",
+            "@test:integration"
+        ],
+        "test:unit": "phpunit -c tests/phpunit.unit.xml",
+        "test:integration": "phpunit -c tests/phpunit.integration.xml",
+        "test:setup": "@php tests/integration/setup.php",
+        "analyse:phpstan": "phpstan analyse"
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests.",
+        "test:unit": "Runs the unit tests.",
+        "test:integration": "Runs all integration tests.",
+        "test:setup": "Sets up a database for use with integration tests. Execute this only once.",
+        "analyse:phpstan": "Run static analysis"
+    },
+    "minimum-stability": "beta",
+    "prefer-stable": true
+}
