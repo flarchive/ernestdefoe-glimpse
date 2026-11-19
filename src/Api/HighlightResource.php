@@ -1,0 +1,208 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ErnestDefoe\Glimpse\Api;
+
+use Carbon\Carbon;
+use ErnestDefoe\Glimpse\Config;
+use ErnestDefoe\Glimpse\Flags;
+use ErnestDefoe\Glimpse\Highlight;
+use ErnestDefoe\Glimpse\Ids;
+use ErnestDefoe\Glimpse\MemberLock;
+use ErnestDefoe\Glimpse\Story;
+use Flarum\Api\Context;
+use Flarum\Api\Endpoint;
+use Flarum\Api\Resource\AbstractDatabaseResource;
+use Flarum\Api\Schema;
+use Flarum\Foundation\ValidationException;
+use Flarum\Locale\TranslatorInterface;
+use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Tobyz\JsonApiServer\Context as BaseContext;
+use Tobyz\JsonApiServer\Pagination\Pagination;
+
+/**
+ * The `glimpse-highlights` type: a member's named, lasting collections of their own stories.
+ *
+ * GET    /api/glimpse-highlights?filter[user]=<id>   a profile's row, in order, with the stories each
+ *                                                  holds that the viewer may see
+ * POST   /api/glimpse-highlights                     {title, relationships.stories}
+ * PATCH  /api/glimpse-highlights/{id}                rename, reorder, or replace its stories
+ * DELETE /api/glimpse-highlights/{id}                the stories stay (and expire as usual)
+ *
+ * @extends AbstractDatabaseResource<Highlight>
+ */
+class HighlightResource extends AbstractDatabaseResource
+{
+    public function __construct(
+        private readonly Config $config,
+        private readonly TranslatorInterface $translator,
+        private readonly ConnectionInterface $db,
+        private readonly Flags $flags,
+        private readonly MemberLock $locks,
+    ) {
+    }
+
+    public function type(): string
+    {
+        return 'glimpse-highlights';
+    }
+
+    public function model(): string
+    {
+        return Highlight::class;
+    }
+
+    /**
+     * Its owner and moderators see every highlight; anyone else only one holding a story they may see,
+     * so a title never shows for stories kept from them (followers only, hidden, an author who ignores
+     * them, a suspended author).
+     *
+     * @param Builder<Highlight> $query
+     */
+    public function scope(Builder $query, BaseContext $context): void
+    {
+        $actor = $context->getActor();
+        if (! $actor->hasPermission('glimpse.view')) {
+            $query->whereKey([]);
+
+            return;
+        }
+        if ($actor->hasPermission('glimpse.moderate')) {
+            return;
+        }
+
+        $query->where(function (Builder $visible) use ($actor): void {
+            if (! $actor->isGuest()) {
+                $visible->where('glimpse_highlights.user_id', $actor->id);
+            }
+            $visible->orWhereHas('stories', fn (Builder $story) => $story->whereVisibleTo($actor));
+        });
+    }
+
+    public function endpoints(): array
+    {
+        return [
+            Endpoint\Index::make()
+                ->defaultInclude(['stories'])
+                ->query(fn (Builder $query, ?Pagination $pagination, Context $context, array $filters): Context => $context->withQuery(
+                    $query->where('glimpse_highlights.user_id', Ids::one($filters['user'] ?? null))
+                        ->orderBy('glimpse_highlights.position')
+                        ->orderBy('glimpse_highlights.id')
+                        ->limit($this->config->highlightsMax())
+                )),
+            Endpoint\Show::make()->defaultInclude(['stories']),
+            Endpoint\Create::make()
+                ->authenticated()
+                ->can('glimpse.create')
+                ->defaultInclude(['stories']),
+            // Owner only (Access\HighlightPolicy).
+            Endpoint\Update::make()
+                ->authenticated()
+                ->can('update')
+                ->defaultInclude(['stories']),
+            Endpoint\Delete::make()
+                ->authenticated()
+                ->can('delete'),
+        ];
+    }
+
+    public function fields(): array
+    {
+        return [
+            Schema\Str::make('title')
+                ->requiredOnCreate()
+                ->writable()
+                ->minLength(1)
+                ->maxLength(40),
+            Schema\Integer::make('position')
+                ->writableOnUpdate()
+                // Replacing is intended: no earlier rule (not nullable), so these three are the whole set.
+                ->rules(['integer', 'min:0', 'max:1000'], true),
+            Schema\Relationship\ToOne::make('user')
+                ->type('users')
+                ->includable(),
+            Schema\Relationship\ToMany::make('stories')
+                ->type('glimpse-stories')
+                ->includable()
+                ->writable()
+                // The viewer's visibility rule and flags (seen, reaction), and the media: one query for every story.
+                ->scope(fn (Builder|Relation $query, Context $context) => $this->scopeStories($query, $context))
+                // Checked before the highlight is written; synced (instead of Flarum's plain sync) after.
+                ->set(fn (Highlight $highlight, array $stories) => $this->checkStories($stories))
+                ->save(fn (Highlight $highlight, array $stories, Context $context) => $this->saveStories($highlight, $stories, $context)),
+        ];
+    }
+
+    /** @param Context $context */
+    public function creating(object $model, BaseContext $context): ?object
+    {
+        $model->user_id = $context->getActor()->id;
+        $model->created_at = Carbon::now();
+
+        return $model;
+    }
+
+    /**
+     * A new highlight is counted against the limit and given the next position under a per-member lock,
+     * so two created at once can't both slip under the limit or share a position.
+     */
+    protected function saveModel(Model $model, BaseContext $context): void
+    {
+        if ($model->exists || ! $model instanceof Highlight) {
+            parent::saveModel($model, $context);
+
+            return;
+        }
+
+        $this->locks->run('highlight', $model->user_id, 'title', function () use ($model, $context): void {
+            $max = $this->config->highlightsMax();
+            if (Highlight::query()->where('user_id', $model->user_id)->count() >= $max) {
+                throw new ValidationException(['title' => $this->translator->trans('ernestdefoe-glimpse.api.highlights_full', ['{count}' => $max])]);
+            }
+            $model->position = Ids::one(Highlight::query()->where('user_id', $model->user_id)->max('position')) + 1;
+            parent::saveModel($model, $context);
+        });
+    }
+
+    /** @param Builder<Story>|Relation<Story, Highlight, mixed> $query */
+    private function scopeStories(Builder|Relation $query, Context $context): void
+    {
+        $stories = $query instanceof Relation ? $query->getQuery() : $query;
+        $actor = $context->getActor();
+        $stories->whereVisibleTo($actor)->select('glimpse_stories.*')->with('media');
+        $this->flags->apply($stories, $actor);
+    }
+
+    /**
+     * Before anything is written: a highlight holds at most the admin's limit (only its owner gets here: HighlightPolicy).
+     *
+     * @param array<mixed> $stories
+     */
+    private function checkStories(array $stories): void
+    {
+        if (count($stories) > $this->config->highlightStoriesMax()) {
+            throw new ValidationException(['stories' => $this->translator->trans('ernestdefoe-glimpse.api.highlight_full', ['{count}' => $this->config->highlightStoriesMax()])]);
+        }
+    }
+
+    /**
+     * Keeps the member's own stories only, in the order given.
+     *
+     * @param array<mixed> $stories
+     */
+    private function saveStories(Highlight $highlight, array $stories, Context $context): void
+    {
+        $ids = Ids::of(array_map(fn (mixed $story): int => $story instanceof Story ? $story->id : 0, $stories));
+        $own = Ids::of(Story::query()->whereIn('id', $ids)->where('user_id', $context->getActor()->id)->pluck('id'));
+        $ids = array_values(array_intersect($ids, $own));
+
+        $this->db->transaction(fn () => $highlight->stories()->sync(array_combine($ids, array_map(
+            fn (int $position): array => ['position' => $position],
+            array_keys($ids)
+        ))));
+    }
+}
